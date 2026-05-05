@@ -34,6 +34,9 @@ class DashboardController {
    
     $stats = $this->calculateStats($bookings);
 
+    $showAuthSuccessAnimation = !empty($_SESSION['show_auth_success_animation']);
+    unset($_SESSION['show_auth_success_animation']);
+
     include APP_PATH . '/views/dashboard/index.php';
 }
 

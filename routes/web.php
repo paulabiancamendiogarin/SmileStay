@@ -2,10 +2,10 @@
 
 
 $request_uri = $_SERVER['REQUEST_URI'];
-$base_path = '/SMILESTAY/public';
+$base_path = APP_BASE_PATH;
 
-
-$uri = str_replace($base_path, '', parse_url($request_uri, PHP_URL_PATH));
+$request_path = rawurldecode(parse_url($request_uri, PHP_URL_PATH) ?? '');
+$uri = str_replace($base_path, '', $request_path);
 $uri = trim($uri, '/');
 
 if (empty($uri)) {
@@ -30,11 +30,17 @@ $routes = [
     'login' => ['controller' => 'AuthController', 'action' => 'login'],
     'register' => ['controller' => 'AuthController', 'action' => 'register'],
     'logout' => ['controller' => 'AuthController', 'action' => 'logout'],
+    'verify-login-otp' => ['controller' => 'AuthController', 'action' => 'verifyLoginOtp'],
+    'verify-register-otp' => ['controller' => 'AuthController', 'action' => 'verifyRegisterOtp'],
+    'resend-login-otp' => ['controller' => 'AuthController', 'action' => 'resendLoginOtp'],
+    'resend-register-otp' => ['controller' => 'AuthController', 'action' => 'resendRegisterOtp'],
 
     // BOOKINGS (USER)
     'booking' => ['controller' => 'BookingController', 'action' => 'create'],
     'booking-confirm' => ['controller' => 'BookingController', 'action' => 'confirm'],
     'booking-store' => ['controller' => 'BookingController', 'action' => 'store'],
+    'booking-payment' => ['controller' => 'BookingController', 'action' => 'payment'],
+    'booking-payment-upload' => ['controller' => 'BookingController', 'action' => 'uploadPaymentProof'],
 
     'edit-booking' => ['controller' => 'DashboardController', 'action' => 'editBooking'],
 'update-booking' => ['controller' => 'DashboardController', 'action' => 'updateBooking'],
@@ -67,6 +73,8 @@ $routes = [
     'admin-bookings' => ['controller' => 'AdminController', 'action' => 'bookings'],
     'admin-update-booking' => ['controller' => 'AdminController', 'action' => 'updateBooking'],
     'admin-delete-booking' => ['controller' => 'AdminController', 'action' => 'deleteBooking'], // ✅ ADDED
+    'admin-payments' => ['controller' => 'AdminController', 'action' => 'payments'],
+    'admin-verify-payment' => ['controller' => 'AdminController', 'action' => 'verifyPayment'],
 ];
 
 

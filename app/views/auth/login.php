@@ -13,6 +13,19 @@
                             <p class="text-muted">Sign in to your account</p>
                         </div>
 
+                        <?php if (isset($_GET['registered'])): ?>
+                            <div class="alert alert-success auth-reg-success mb-4">
+                                <i class="bi bi-stars me-2"></i>Welcome aboard — your email is verified. Sign in below.
+                            </div>
+                            <style>
+                            @keyframes regPop {
+                                0% { transform: translateY(8px); opacity: 0; }
+                                100% { transform: translateY(0); opacity: 1; }
+                            }
+                            .auth-reg-success { animation: regPop .55s ease-out; border-width: 2px; }
+                            </style>
+                        <?php endif; ?>
+
                         <?php if (isset($error)): ?>
                             <div class="alert alert-danger">
                                 <i class="bi bi-exclamation-circle me-2"></i><?= $error ?>
@@ -57,9 +70,9 @@
 
                         <div class="mt-4 p-3 bg-light rounded">
                             <small class="text-muted">
-                                <strong>Demo Credentials:</strong><br>
-                                Admin: admin@hotellocator.com / password<br>
-                                User: john@example.com / password
+                                <strong>Demo:</strong> Admin / User passwords are still <code>password</code> — after login/register,
+                                Gmail OTP is emailed when SMTP is configured in <code>config/config.php</code>
+                                (App Password required).
                             </small>
                         </div>
 
@@ -72,20 +85,23 @@
 
 
 <script>
-function togglePassword(fieldId, el) {
-    const input = document.getElementById(fieldId);
-    const icon = el.querySelector("i");
+document.addEventListener('DOMContentLoaded', function () {
 
-    if (input.type === "password") {
-        input.type = "text";
-        icon.classList.remove("bi-eye");
-        icon.classList.add("bi-eye-slash");
-    } else {
-        input.type = "password";
-        icon.classList.remove("bi-eye-slash");
-        icon.classList.add("bi-eye");
-    }
-}
+    window.togglePassword = function(fieldId, el) {
+        const input = document.getElementById(fieldId);
+        const icon = el.querySelector("i");
+
+        if (!input) return;
+
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.replace("bi-eye", "bi-eye-slash");
+        } else {
+            input.type = "password";
+            icon.classList.replace("bi-eye-slash", "bi-eye");
+        }
+    };
+
+});
 </script>
-
 <?php include APP_PATH . '/views/layouts/footer.php'; ?>

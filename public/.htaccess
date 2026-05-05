@@ -3,9 +3,6 @@
 # Enable URL rewriting
 RewriteEngine On
 
-# Set the base directory
-RewriteBase /SMILESTAY/public/
-
 # If the requested file or directory doesn't exist, route to index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

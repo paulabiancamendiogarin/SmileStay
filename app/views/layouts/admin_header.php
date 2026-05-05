@@ -50,6 +50,11 @@
                         <i class="bi bi-calendar-check me-2"></i>Bookings
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], 'admin-payments') !== false ? 'active' : '' ?>" href="<?= APP_URL ?>/admin-payments">
+                        <i class="bi bi-wallet2 me-2"></i>Payments
+                    </a>
+                </li>
                 <li class="nav-item mt-4">
                     <a class="nav-link" href="<?= APP_URL ?>">
                         <i class="bi bi-house me-2"></i>View Site

@@ -10,15 +10,23 @@
                     <div class="confirmation-icon">
                         <i class="bi bi-check-circle-fill text-success display-1"></i>
                     </div>
-                    <h2 class="mt-3">Booking Confirmed!</h2>
-                    <p class="text-muted">Your reservation has been successfully made.</p>
+                    <h2 class="mt-3">Booking received</h2>
+                    <p class="text-muted">
+                        <?php if (!empty($payment) && $payment['status'] === 'verified'): ?>
+                            Payment verified. Your reservation is on file pending hotel confirmation when staff updates your booking status.
+                        <?php elseif (!empty($payment)): ?>
+                            GCash payment is still pending verification. You can check status from <a href="<?= APP_URL ?>/booking-payment/<?= (int)$booking['id'] ?>">the payment page</a>.
+                        <?php else: ?>
+                            Your reservation request has been recorded.
+                        <?php endif; ?>
+                    </p>
                 </div>
 
                 <div class="card">
                     <div class="card-header bg-success text-white">
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Booking Details</h5>
-                            <span class="badge bg-white text-success"><?= $booking['booking_reference'] ?></span>
+                            <span class="badge bg-white text-success"><?= htmlspecialchars($booking['booking_reference']) ?></span>
                         </div>
                     </div>
                     <div class="card-body">
@@ -91,8 +99,12 @@
 
                 <div class="alert alert-info mt-4">
                     <i class="bi bi-info-circle me-2"></i>
-                    A confirmation email has been sent to <strong><?= htmlspecialchars($booking['guest_email']) ?></strong>.
-                    Please save your booking reference <strong><?= $booking['booking_reference'] ?></strong> for check-in.
+                    Save your booking reference <strong><?= htmlspecialchars($booking['booking_reference']) ?></strong> for check-in.
+                    <?php if (!empty($payment)): ?>
+                        Payment reference: <strong><?= htmlspecialchars($payment['reference_code']) ?></strong>
+                        — status:
+                        <strong><?= $payment['status'] === 'verified' ? 'Paid (verified)' : 'Pending verification' ?></strong>.
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

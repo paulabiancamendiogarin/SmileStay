@@ -2,8 +2,8 @@
 -- Hotel Locator System Database
 -- For Bacolod City, Philippines
 -- =====================================================
-CREATE DATABASE IF NOT EXISTS hotel_locator_db;
-USE hotel_locator_db;
+CREATE DATABASE IF NOT EXISTS hotel_locatorr_db;
+USE hotel_locatorr_db;
 -- =====================================================
 -- USERS TABLE
 -- =====================================================
@@ -12,6 +12,7 @@ id INT AUTO_INCREMENT PRIMARY KEY,
 name VARCHAR(100) NOT NULL,
 email VARCHAR(100) NOT NULL UNIQUE,
 password VARCHAR(255) NOT NULL,
+google_auth_secret VARCHAR(64) DEFAULT NULL,
 role ENUM('admin', 'customer') DEFAULT 'customer',
 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
@@ -249,3 +250,31 @@ INSERT INTO rooms (hotel_id, room_type, capacity, price, description, available)
 (10, 'Studio Suite', 2, 3500.00, 'Compact suite with kitchenette.', 5),
 (10, 'One Bedroom Suite', 2, 4500.00, 'Full suite with separate bedroom and kitchen.', 4),
 (10, 'Two Bedroom Suite', 4, 6000.00, 'Spacious suite ideal for families or groups.', 2); 
+
+CREATE TABLE IF NOT EXISTS payments (
+id INT AUTO_INCREMENT PRIMARY KEY,
+booking_id INT NOT NULL UNIQUE,
+amount DECIMAL(10, 2) NOT NULL,
+reference_code VARCHAR(64) NOT NULL,
+qr_image_path VARCHAR(255) DEFAULT NULL,
+proof_image VARCHAR(255) DEFAULT NULL,
+status ENUM('pending', 'verified') DEFAULT 'pending',
+expires_at DATETIME NOT NULL,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
+INDEX idx_payments_status (status),
+INDEX idx_payments_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS otp_codes (
+id INT AUTO_INCREMENT PRIMARY KEY,
+email VARCHAR(100) NOT NULL,
+otp_code VARCHAR(6) NOT NULL,
+purpose ENUM('login', 'register') NOT NULL,
+expires_at DATETIME NOT NULL,
+failed_attempts INT NOT NULL DEFAULT 0,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+INDEX idx_otp_email_purpose (email, purpose),
+INDEX idx_otp_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

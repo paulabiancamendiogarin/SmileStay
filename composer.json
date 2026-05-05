@@ -1,0 +1,12 @@
+{
+    "name": "smilestay/app",
+    "description": "SmileStay Hotel Locator",
+    "require": {
+        "php": ">=8.1",
+        "phpmailer/phpmailer": "^6.9",
+        "endroid/qr-code": "^5.0"
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

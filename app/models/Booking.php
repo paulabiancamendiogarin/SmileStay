@@ -87,10 +87,13 @@ class Booking {
         $stmt = $this->db->prepare(
             "SELECT b.*, 
                     h.hotel_name,
-                    r.room_type
+                    r.room_type,
+                    pay.status AS payment_status,
+                    pay.expires_at AS payment_expires_at
              FROM {$this->table} b
              JOIN hotels h ON b.hotel_id = h.id
              JOIN rooms r ON b.room_id = r.id
+             LEFT JOIN payments pay ON pay.booking_id = b.id
              WHERE b.user_id = ?
              ORDER BY b.created_at DESC"
         );
@@ -190,5 +193,17 @@ class Booking {
              WHERE status IN ('confirmed', 'completed')"
         );
         return $stmt->fetchColumn();
+    }
+
+    /** Auto-cancel pending bookings whose payment window expired without verified payment */
+    public function expireUnpaidBookings(): void
+    {
+        $sql = "UPDATE bookings b
+                INNER JOIN payments p ON p.booking_id = b.id
+                SET b.status = 'cancelled'
+                WHERE b.status = 'pending'
+                  AND p.status = 'pending'
+                  AND p.expires_at < NOW()";
+        $this->db->exec($sql);
     }
 }

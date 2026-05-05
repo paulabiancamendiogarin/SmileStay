@@ -7,6 +7,7 @@ class AdminController {
     private $roomModel;
     private $bookingModel;
     private $userModel;
+    private $paymentModel;
 
     public function __construct() {
         
@@ -19,6 +20,7 @@ class AdminController {
         $this->roomModel = new Room();
         $this->bookingModel = new Booking();
         $this->userModel = new User();
+        $this->paymentModel = new Payment();
     }
 
     
@@ -378,5 +380,47 @@ public function deleteBooking() {
 
     redirect('/admin-bookings');
 }
+
+    public function payments() {
+        $payments = $this->paymentModel->getAllWithBookingDetails();
+
+        if (!is_array($payments)) {
+            $payments = [];
+        }
+
+        include APP_PATH . '/views/admin/payments/index.php';
+    }
+
+    public function verifyPayment() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('/admin-payments');
+        }
+
+        $paymentId = (int) ($_POST['payment_id'] ?? 0);
+
+        if (!$paymentId) {
+            redirect('/admin-payments');
+        }
+
+        $payment = $this->paymentModel->findById($paymentId);
+
+        if (!$payment || $payment['status'] !== 'pending') {
+            setFlashMessage('error', 'Payment not found or already verified.');
+            redirect('/admin-payments');
+        }
+
+        if (empty($payment['proof_image'])) {
+            setFlashMessage('error', 'Guest has not uploaded proof yet.');
+            redirect('/admin-payments');
+        }
+
+        if ($this->paymentModel->verify($paymentId)) {
+            setFlashMessage('success', 'Payment marked as verified (paid).');
+        } else {
+            setFlashMessage('error', 'Could not update payment.');
+        }
+
+        redirect('/admin-payments');
+    }
 
 }

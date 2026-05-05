@@ -1,18 +1,22 @@
 <?php
 
-class BookingController {
+class BookingController
+{
     private $hotelModel;
     private $roomModel;
     private $bookingModel;
+    private $paymentModel;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->hotelModel = new Hotel();
         $this->roomModel = new Room();
         $this->bookingModel = new Booking();
+        $this->paymentModel = new Payment();
     }
 
-   
-    public function create() {
+    public function create()
+    {
         if (!isLoggedIn()) {
             setFlashMessage('error', 'Please login to make a booking.');
             redirect('/login');
@@ -40,9 +44,8 @@ class BookingController {
         include APP_PATH . '/views/bookings/create.php';
     }
 
-  
-    public function store() {
-
+    public function store()
+    {
         if (!isLoggedIn()) {
             redirect('/login');
         }
@@ -58,7 +61,6 @@ class BookingController {
             redirect('/login');
         }
 
-       
         $roomId = $_POST['room_id'] ?? null;
         $hotelId = $_POST['hotel_id'] ?? null;
         $checkIn = $_POST['check_in'] ?? null;
@@ -66,7 +68,6 @@ class BookingController {
         $guests = (int) ($_POST['guests'] ?? 1);
         $specialRequests = sanitize($_POST['special_requests'] ?? '');
 
-       
         if (!$roomId || !$hotelId || !$checkIn || !$checkOut) {
             setFlashMessage('error', 'Please fill all required fields.');
             redirect("/booking?room_id=$roomId&hotel_id=$hotelId");
@@ -86,7 +87,6 @@ class BookingController {
             redirect("/booking?room_id=$roomId&hotel_id=$hotelId");
         }
 
-      
         $room = $this->roomModel->findById($roomId);
 
         if (!$room) {
@@ -94,21 +94,20 @@ class BookingController {
             redirect('/hotels');
         }
 
-      
         if (!$this->roomModel->isAvailableForDates($roomId, $checkIn, $checkOut)) {
             setFlashMessage('error', 'Room not available.');
             redirect("/booking?room_id=$roomId&hotel_id=$hotelId");
         }
 
-      
         if ($guests > $room['capacity']) {
             setFlashMessage('error', "Max guests: {$room['capacity']}");
             redirect("/booking?room_id=$roomId&hotel_id=$hotelId");
         }
 
-       
         $nights = $checkInDate->diff($checkOutDate)->days;
         $totalPrice = $room['price'] * $nights;
+
+        $this->bookingModel->beginTransaction();
 
         $result = $this->bookingModel->create([
             'user_id' => $userId,
@@ -119,23 +118,37 @@ class BookingController {
             'total_price' => $totalPrice,
             'guests' => $guests,
             'special_requests' => $specialRequests,
-            'status' => 'pending' 
+            'status' => 'pending',
         ]);
 
         if (!$result || !isset($result['id'])) {
+            $this->bookingModel->rollback();
             setFlashMessage('error', 'Booking failed.');
             redirect("/booking?room_id=$roomId&hotel_id=$hotelId");
         }
 
-   
+        $bookingId = (int) $result['id'];
 
-        setFlashMessage('success', 'Booking submitted! Waiting for admin approval.');
-        redirect('/booking-confirm/' . $result['id']);
+        $this->bookingModel->commit();
+
+        setFlashMessage('success', 'Booking created successfully.');
+        redirect('/booking-confirm/' . $bookingId);
     }
 
+    public function payment($id = null)
+    {
+        setFlashMessage('info', 'Online payment is currently disabled. Your booking is recorded without payment.');
+        redirect('/my-bookings');
+    }
 
-    public function confirm($id = null) {
+    public function uploadPaymentProof($id = null)
+    {
+        setFlashMessage('info', 'Payment proof upload is currently disabled.');
+        redirect('/my-bookings');
+    }
 
+    public function confirm($id = null)
+    {
         if (!isLoggedIn()) {
             redirect('/login');
         }
@@ -153,59 +166,8 @@ class BookingController {
             redirect('/dashboard');
         }
 
+        $payment = null;
+
         include APP_PATH . '/views/bookings/confirmation.php';
-    }
-
-    public function cancel() {
-
-        if (!isLoggedIn()) {
-            redirect('/login');
-        }
-
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            redirect('/dashboard');
-        }
-
-        $bookingId = $_POST['booking_id'] ?? null;
-
-        if (!$bookingId) {
-            setFlashMessage('error', 'Invalid booking.');
-            redirect('/dashboard');
-        }
-
-        $booking = $this->bookingModel->findById($bookingId);
-
-        if (!$booking || $booking['user_id'] != $_SESSION['user_id']) {
-            setFlashMessage('error', 'Unauthorized.');
-            redirect('/dashboard');
-        }
-
-        if ($booking['status'] === 'completed') {
-            setFlashMessage('error', 'Cannot cancel completed booking.');
-            redirect('/dashboard');
-        }
-
-        
-        $checkInDate = new DateTime($booking['check_in']);
-        $today = new DateTime('today');
-
-        if ($checkInDate <= $today) {
-            setFlashMessage('error', 'Cannot cancel after check-in date.');
-            redirect('/dashboard');
-        }
-
-        if ($this->bookingModel->cancel($bookingId)) {
-
-           
-            if ($booking['status'] === 'confirmed') {
-                $this->roomModel->increaseAvailability($booking['room_id']);
-            }
-
-            setFlashMessage('success', 'Booking cancelled.');
-        } else {
-            setFlashMessage('error', 'Cancel failed.');
-        }
-
-        redirect('/dashboard');
     }
 }

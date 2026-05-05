@@ -3,6 +3,43 @@
 <?php $pageTitle = 'Dashboard - ' . APP_NAME; ?>
 <?php include APP_PATH . '/views/layouts/header.php'; ?>
 
+<?php if (!empty($showAuthSuccessAnimation)): ?>
+<style>
+@keyframes authPulse {
+    0% { transform: scale(.94); opacity: 0; }
+    35% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+.auth-success-overlay {
+    position: fixed; inset: 0; z-index: 1080;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(25, 135, 84, 0.12);
+    animation: fadeBG .6s ease forwards;
+    pointer-events: none;
+}
+.auth-success-overlay .bubble {
+    animation: authPulse .65s ease-out forwards;
+    background: #fff; border-radius: 1rem;
+    padding: 1.25rem 2rem; box-shadow: 0 .5rem 2rem rgba(0,0,0,.12);
+    border: 2px solid rgba(25,135,84,.35);
+}
+@keyframes fadeBG { from { opacity: 0; } to { opacity: 1; } }
+</style>
+<div class="auth-success-overlay" id="authSuccessFx">
+    <div class="bubble text-center">
+        <i class="bi bi-check-circle-fill text-success display-4 d-block mb-2"></i>
+        <strong class="text-success">You're in!</strong>
+        <div class="small text-muted mt-1">OTP verified successfully.</div>
+    </div>
+</div>
+<script>
+setTimeout(function () {
+    var el = document.getElementById('authSuccessFx');
+    if (el) { el.style.opacity = '0'; el.style.transition = 'opacity .5s'; setTimeout(function(){ el.remove(); }, 500); }
+}, 1400);
+</script>
+<?php endif; ?>
+
 <section class="py-5">
     <div class="container">
         <div class="row mb-4">
