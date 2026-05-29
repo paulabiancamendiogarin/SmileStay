@@ -13,6 +13,7 @@ require_once APP_PATH . '/models/Room.php';
 require_once APP_PATH . '/models/Booking.php';
 require_once APP_PATH . '/models/Payment.php';
 require_once APP_PATH . '/models/OtpCode.php';
+require_once APP_PATH . '/models/Notification.php';
 require_once APP_PATH . '/services/SimpleGmailSmtp.php';
 require_once APP_PATH . '/services/MailService.php';
 require_once APP_PATH . '/services/QrGenerator.php';

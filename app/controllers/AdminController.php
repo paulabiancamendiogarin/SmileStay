@@ -48,6 +48,8 @@ class AdminController {
         }
     }
 
+    $pendingUserCount = $this->userModel->getPendingCount();
+
     include APP_PATH . '/views/admin/dashboard.php';
 }
 
@@ -311,17 +313,66 @@ class AdminController {
 
     
    public function bookings() {
+    $filters = [
+        'search' => sanitize($_GET['q'] ?? ''),
+        'status' => sanitize($_GET['status'] ?? ''),
+        'payment_status' => sanitize($_GET['payment_status'] ?? ''),
+        'user_approved' => $_GET['user_approved'] ?? '',
+        'sort' => sanitize($_GET['sort'] ?? 'created_at'),
+        'dir' => sanitize($_GET['dir'] ?? 'DESC'),
+    ];
 
-    $bookings = $this->bookingModel->getAll();
-
-   
-    if (!is_array($bookings)) {
-        $bookings = [];
-    }
-
+    $page = (int) ($_GET['page'] ?? 1);
+    $perPage = (int) ($_GET['per_page'] ?? 15);
+    $paged = $this->bookingModel->searchAdminHistoryPaged($filters, $page, $perPage);
+    $bookings = $paged['rows'] ?? [];
+    $totalPages = $paged['total_pages'] ?? 1;
+    $currentPage = $paged['page'] ?? 1;
+    $totalRows = $paged['total'] ?? 0;
+    $perPage = $paged['per_page'] ?? $perPage;
 
     include APP_PATH . '/views/admin/bookings/index.php';
 }
+
+    public function users() {
+        $users = $this->userModel->getAllCustomers();
+        $pendingUsers = $this->userModel->getPendingApproval();
+
+        include APP_PATH . '/views/admin/users/index.php';
+    }
+
+    public function approveUser() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('/admin-users');
+        }
+
+        $userId = (int) ($_POST['user_id'] ?? 0);
+
+        if (!$userId) {
+            setFlashMessage('error', 'Invalid user.');
+            redirect('/admin-users');
+        }
+
+        $user = $this->userModel->findById($userId);
+
+        if (!$user || ($user['role'] ?? '') !== 'customer') {
+            setFlashMessage('error', 'User not found.');
+            redirect('/admin-users');
+        }
+
+        if (!empty($user['is_approved'])) {
+            setFlashMessage('info', 'User is already approved.');
+            redirect('/admin-users');
+        }
+
+        if ($this->userModel->approve($userId)) {
+            setFlashMessage('success', 'User approved successfully. They can now access the system.');
+        } else {
+            setFlashMessage('error', 'Could not approve user.');
+        }
+
+        redirect('/admin-users');
+    }
 
     
     public function updateBooking() {
@@ -421,6 +472,102 @@ public function deleteBooking() {
         }
 
         redirect('/admin-payments');
+    }
+
+    public function rejectPayment() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('/admin-payments');
+        }
+
+        $paymentId = (int) ($_POST['payment_id'] ?? 0);
+        $reason = sanitize($_POST['reason'] ?? 'Payment rejected by admin.');
+
+        if (!$paymentId) {
+            redirect('/admin-payments');
+        }
+
+        if ($this->paymentModel->reject($paymentId, $reason)) {
+            setFlashMessage('success', 'Payment rejected.');
+        } else {
+            setFlashMessage('error', 'Could not reject payment.');
+        }
+
+        redirect('/admin-payments');
+    }
+
+    public function reports()
+    {
+        $filters = [
+            'from' => sanitize($_GET['from'] ?? ''),
+            'to' => sanitize($_GET['to'] ?? ''),
+            'hotel_id' => sanitize($_GET['hotel_id'] ?? ''),
+            'payment_status' => sanitize($_GET['payment_status'] ?? ''),
+            'booking_status' => sanitize($_GET['booking_status'] ?? ''),
+            'year' => (int) ($_GET['year'] ?? (int) date('Y')),
+        ];
+
+        $hotels = $this->hotelModel->getAllAdmin();
+        $summary = $this->bookingModel->getReportSummary($filters);
+        $topHotels = $this->bookingModel->getMostBookedHotels($filters, 5);
+        $monthlyBookings = $this->bookingModel->getMonthlyBookings((int) $filters['year'], $filters);
+        $monthlyRegistrations = $this->userModel->getMonthlyRegistrations((int) $filters['year']);
+
+        include APP_PATH . '/views/admin/reports/index.php';
+    }
+
+    public function exportReports()
+    {
+        $format = sanitize($_GET['format'] ?? 'csv'); // csv|excel
+        $filters = [
+            'from' => sanitize($_GET['from'] ?? ''),
+            'to' => sanitize($_GET['to'] ?? ''),
+            'hotel_id' => sanitize($_GET['hotel_id'] ?? ''),
+            'payment_status' => sanitize($_GET['payment_status'] ?? ''),
+            'booking_status' => sanitize($_GET['booking_status'] ?? ''),
+        ];
+
+        $rows = $this->bookingModel->searchAdminHistory($filters);
+
+        $filename = 'reports_' . date('Ymd_His');
+        if ($format === 'excel') {
+            header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+            header('Content-Disposition: attachment; filename="' . $filename . '.xls"');
+            echo "Reference\tGuest\tEmail\tHotel\tRoom\tCheck-in\tCheck-out\tBooking Status\tPayment Status\tAmount\n";
+            foreach ($rows as $r) {
+                echo ($r['booking_reference'] ?? '') . "\t"
+                    . ($r['guest_name'] ?? '') . "\t"
+                    . ($r['guest_email'] ?? '') . "\t"
+                    . ($r['hotel_name'] ?? '') . "\t"
+                    . ($r['room_type'] ?? '') . "\t"
+                    . ($r['check_in'] ?? '') . "\t"
+                    . ($r['check_out'] ?? '') . "\t"
+                    . ($r['status'] ?? '') . "\t"
+                    . ($r['payment_status'] ?? '') . "\t"
+                    . ($r['total_price'] ?? '') . "\n";
+            }
+            exit;
+        }
+
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '.csv"');
+        $out = fopen('php://output', 'w');
+        fputcsv($out, ['Reference','Guest','Email','Hotel','Room','Check-in','Check-out','Booking Status','Payment Status','Amount']);
+        foreach ($rows as $r) {
+            fputcsv($out, [
+                $r['booking_reference'] ?? '',
+                $r['guest_name'] ?? '',
+                $r['guest_email'] ?? '',
+                $r['hotel_name'] ?? '',
+                $r['room_type'] ?? '',
+                $r['check_in'] ?? '',
+                $r['check_out'] ?? '',
+                $r['status'] ?? '',
+                $r['payment_status'] ?? '',
+                $r['total_price'] ?? '',
+            ]);
+        }
+        fclose($out);
+        exit;
     }
 
 }

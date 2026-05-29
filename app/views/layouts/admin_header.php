@@ -46,8 +46,18 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], 'admin-users') !== false ? 'active' : '' ?>" href="<?= APP_URL ?>/admin-users">
+                        <i class="bi bi-people me-2"></i>Users
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], 'admin-bookings') !== false ? 'active' : '' ?>" href="<?= APP_URL ?>/admin-bookings">
-                        <i class="bi bi-calendar-check me-2"></i>Bookings
+                        <i class="bi bi-journal-text me-2"></i>Booking History
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], 'admin-reports') !== false ? 'active' : '' ?>" href="<?= APP_URL ?>/admin-reports">
+                        <i class="bi bi-graph-up me-2"></i>Reports
                     </a>
                 </li>
                 <li class="nav-item">

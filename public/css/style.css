@@ -376,3 +376,17 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--color-dark);
 }
+
+.admin-booking-table {
+    font-size: 0.9rem;
+}
+
+.admin-booking-table th {
+    white-space: nowrap;
+}
+
+@media (max-width: 991.98px) {
+    .admin-booking-table {
+        font-size: 0.82rem;
+    }
+}

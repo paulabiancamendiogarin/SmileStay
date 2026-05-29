@@ -82,6 +82,30 @@
                                     <textarea class="form-control" id="special_requests" name="special_requests" 
                                               rows="3" placeholder="Any special requests or requirements..."></textarea>
                                 </div>
+
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Payment Method</label>
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <div class="form-check border rounded p-3 h-100">
+                                                <input class="form-check-input" type="radio" name="payment_method" id="pm_cash" value="cash" checked>
+                                                <label class="form-check-label fw-semibold" for="pm_cash">
+                                                    <i class="bi bi-cash-coin me-1"></i>Cash Payment
+                                                </label>
+                                                <div class="text-muted small mt-1">Marked as pending payment.</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check border rounded p-3 h-100">
+                                                <input class="form-check-input" type="radio" name="payment_method" id="pm_card" value="card">
+                                                <label class="form-check-label fw-semibold" for="pm_card">
+                                                    <i class="bi bi-credit-card me-1"></i>Credit / Debit Card
+                                                </label>
+                                                <div class="text-muted small mt-1">Instant confirmation (demo).</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <hr class="my-4 text-muted opacity-25">

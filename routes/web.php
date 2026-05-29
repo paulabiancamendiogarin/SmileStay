@@ -34,11 +34,16 @@ $routes = [
     'verify-register-otp' => ['controller' => 'AuthController', 'action' => 'verifyRegisterOtp'],
     'resend-login-otp' => ['controller' => 'AuthController', 'action' => 'resendLoginOtp'],
     'resend-register-otp' => ['controller' => 'AuthController', 'action' => 'resendRegisterOtp'],
+    'pending-approval' => ['controller' => 'AuthController', 'action' => 'pendingApproval'],
 
     // BOOKINGS (USER)
     'booking' => ['controller' => 'BookingController', 'action' => 'create'],
     'booking-confirm' => ['controller' => 'BookingController', 'action' => 'confirm'],
     'booking-store' => ['controller' => 'BookingController', 'action' => 'store'],
+    // Booking payment management is admin-side; client uses card/cash only.
+    'booking-card' => ['controller' => 'BookingController', 'action' => 'card'],
+    'booking-card-process' => ['controller' => 'BookingController', 'action' => 'processCard'],
+    // Backward-compatible: old links should not 404
     'booking-payment' => ['controller' => 'BookingController', 'action' => 'payment'],
     'booking-payment-upload' => ['controller' => 'BookingController', 'action' => 'uploadPaymentProof'],
 
@@ -49,6 +54,7 @@ $routes = [
     // USER DASHBOARD
     'dashboard' => ['controller' => 'DashboardController', 'action' => 'index'],
     'my-bookings' => ['controller' => 'DashboardController', 'action' => 'bookings'],
+    'my-payments' => ['controller' => 'DashboardController', 'action' => 'payments'],
     'cancel-booking' => ['controller' => 'DashboardController', 'action' => 'cancelBooking'],
 
     'profile' => ['controller' => 'DashboardController', 'action' => 'profile'],
@@ -75,6 +81,11 @@ $routes = [
     'admin-delete-booking' => ['controller' => 'AdminController', 'action' => 'deleteBooking'], // ✅ ADDED
     'admin-payments' => ['controller' => 'AdminController', 'action' => 'payments'],
     'admin-verify-payment' => ['controller' => 'AdminController', 'action' => 'verifyPayment'],
+    'admin-reject-payment' => ['controller' => 'AdminController', 'action' => 'rejectPayment'],
+    'admin-users' => ['controller' => 'AdminController', 'action' => 'users'],
+    'admin-approve-user' => ['controller' => 'AdminController', 'action' => 'approveUser'],
+    'admin-reports' => ['controller' => 'AdminController', 'action' => 'reports'],
+    'admin-reports-export' => ['controller' => 'AdminController', 'action' => 'exportReports'],
 ];
 
 

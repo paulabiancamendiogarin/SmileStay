@@ -5,19 +5,19 @@ class DashboardController {
     private $bookingModel;
     private $roomModel;
     private $userModel;
+    private $paymentModel;
 
  public function __construct() {
     $this->bookingModel = new Booking();
     $this->roomModel = new Room();
     $this->userModel = new User(); 
+    $this->paymentModel = new Payment();
 }
 
     
    public function index() {
    
-    if (!isLoggedIn()) {
-        redirect('/login');
-    }
+    requireApprovedAccess();
 
     if (isAdmin()) {
         redirect('/admin'); 
@@ -67,9 +67,7 @@ class DashboardController {
 
    
     public function bookings() {
-        if (!isLoggedIn()) {
-            redirect('/login');
-        }
+        requireApprovedAccess();
 
         $bookings = $this->bookingModel->getByUserId(getCurrentUserId());
 
@@ -79,7 +77,14 @@ class DashboardController {
 
         include APP_PATH . '/views/bookings/history.php';
     }
+
+    public function payments() {
+        requireApprovedAccess();
+        $payments = $this->paymentModel->getByUserIdWithBooking((int) getCurrentUserId());
+        include APP_PATH . '/views/payments/my_payments.php';
+    }
 public function editBooking($id) {
+    requireApprovedAccess();
     $booking = $this->bookingModel->findById($id);
 
     if (!$booking || $booking['user_id'] != $_SESSION['user_id']) {
@@ -94,6 +99,7 @@ public function editBooking($id) {
 
 
 public function updateBooking($id) {
+    requireApprovedAccess();
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         redirect('/my-bookings');
@@ -124,6 +130,7 @@ public function updateBooking($id) {
 
 
 public function deleteBooking($id) {
+    requireApprovedAccess();
     $booking = $this->bookingModel->findById($id);
 
     if (!$booking || $booking['user_id'] != $_SESSION['user_id']) {
@@ -141,10 +148,7 @@ public function deleteBooking($id) {
 }
 
     public function cancelBooking($id = null) {
-
-    if (!isLoggedIn()) {
-        redirect('/login');
-    }
+    requireApprovedAccess();
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         redirect('/my-bookings');
@@ -213,6 +217,7 @@ public function deleteBooking($id) {
     redirect('/my-bookings');
 }
 public function profile() {
+    requireLogin();
     include APP_PATH . '/views/user/profile.php';
 }
 

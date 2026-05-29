@@ -15,7 +15,7 @@
                         <?php if (!empty($payment) && $payment['status'] === 'verified'): ?>
                             Payment verified. Your reservation is on file pending hotel confirmation when staff updates your booking status.
                         <?php elseif (!empty($payment)): ?>
-                            GCash payment is still pending verification. You can check status from <a href="<?= APP_URL ?>/booking-payment/<?= (int)$booking['id'] ?>">the payment page</a>.
+                            Payment is pending or awaiting confirmation. For updates, please contact the administrator.
                         <?php else: ?>
                             Your reservation request has been recorded.
                         <?php endif; ?>

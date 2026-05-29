@@ -60,9 +60,21 @@ class AuthController
         ];
     }
 
+    private function finishLogin(array $user, bool $showAnimation = true): void
+    {
+        establishUserSession($user);
+
+        if ($showAnimation && !isAdmin()) {
+            $_SESSION['show_auth_success_animation'] = true;
+        }
+    }
+
     public function login()
     {
         if (isLoggedIn()) {
+            if (!userIsApproved()) {
+                redirect('/pending-approval');
+            }
             $this->redirectByRole();
         }
 
@@ -81,23 +93,43 @@ class AuthController
 
                 if ($user) {
 
-                    $this->clearPendingLogin();
+                    $hasTotpSecret = trim((string) ($user['google_auth_secret'] ?? '')) !== '';
+                    $qrComplete = !empty($user['qr_verified']);
 
-                    $_SESSION['pending_otp_login_user_id'] = $user['id'];
-                    $_SESSION['pending_otp_email'] = $user['email'];
-                    $_SESSION['pending_login_totp_failed_attempts'] = 0;
-
-                    $existingSecret = trim((string) ($user['google_auth_secret'] ?? ''));
-                    if ($existingSecret === '') {
-                        $_SESSION['pending_login_totp_secret'] = TotpService::generateSecret();
-                        $_SESSION['pending_login_totp_setup'] = true;
-                        setFlashMessage('success', 'Set up Google Authenticator, then enter the 6-digit code to continue.');
-                    } else {
-                        $_SESSION['pending_login_totp_secret'] = $existingSecret;
-                        $_SESSION['pending_login_totp_setup'] = false;
-                        setFlashMessage('success', 'Enter your Google Authenticator code to sign in.');
+                    if (userIsApproved($user) && $hasTotpSecret && $qrComplete) {
+                        $this->finishLogin($user);
+                        setFlashMessage('success', 'Welcome back, ' . $user['name']);
+                        $this->redirectByRole();
                     }
-                    redirect('/verify-login-otp');
+
+                    if (!$hasTotpSecret || !$qrComplete) {
+                        $this->clearPendingLogin();
+                        $_SESSION['pending_otp_login_user_id'] = $user['id'];
+                        $_SESSION['pending_otp_email'] = $user['email'];
+                        $_SESSION['pending_login_totp_failed_attempts'] = 0;
+
+                        $existingSecret = trim((string) ($user['google_auth_secret'] ?? ''));
+                        if ($existingSecret === '') {
+                            $_SESSION['pending_login_totp_secret'] = TotpService::generateSecret();
+                            $_SESSION['pending_login_totp_setup'] = true;
+                            setFlashMessage('info', 'Scan the QR code once in Google Authenticator, then enter your 6-digit code.');
+                        } else {
+                            $_SESSION['pending_login_totp_secret'] = $existingSecret;
+                            $_SESSION['pending_login_totp_setup'] = true;
+                            setFlashMessage('info', 'Complete one-time QR setup by scanning and entering your code.');
+                        }
+                        redirect('/verify-login-otp');
+                    }
+
+                    if (!userIsApproved($user)) {
+                        $this->finishLogin($user, false);
+                        setFlashMessage('info', 'Your account is pending admin approval.');
+                        redirect('/pending-approval');
+                    }
+
+                    $this->finishLogin($user);
+                    setFlashMessage('success', 'Welcome back, ' . $user['name']);
+                    $this->redirectByRole();
 
                 } else {
                     $error = 'Invalid email or password.';
@@ -111,6 +143,9 @@ class AuthController
     public function verifyLoginOtp()
     {
         if (isLoggedIn()) {
+            if (!userIsApproved()) {
+                redirect('/pending-approval');
+            }
             $this->redirectByRole();
         }
 
@@ -153,28 +188,33 @@ class AuthController
                     redirect('/login');
                 }
 
-                if ($isSetup) {
-                    $saved = $this->userModel->update((int) $user['id'], [
-                        'google_auth_secret' => $pendingSecret,
-                    ]);
+                $updateData = [
+                    'qr_verified' => 1,
+                ];
 
-                    if (!$saved) {
-                        $error = 'Could not save your Google Authenticator setup. Please try again.';
-                        include APP_PATH . '/views/auth/verify_otp_login.php';
-                        return;
-                    }
+                if ($isSetup || empty($user['google_auth_secret'])) {
+                    $updateData['google_auth_secret'] = $pendingSecret;
                 }
 
+                $saved = $this->userModel->update((int) $user['id'], $updateData);
+
+                if (!$saved) {
+                    $error = 'Could not save your authenticator setup. Please try again.';
+                    include APP_PATH . '/views/auth/verify_otp_login.php';
+                    return;
+                }
+
+                $user = $this->userModel->findById((int) $user['id']);
                 $this->clearPendingLogin();
+                $this->finishLogin($user, false);
 
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_name'] = $user['name'];
-                $_SESSION['user_email'] = $user['email'];
-                $_SESSION['user_role'] = $user['role'];
-                $_SESSION['show_auth_success_animation'] = true;
+                if (userIsApproved($user)) {
+                    setFlashMessage('success', 'Welcome back, ' . $user['name']);
+                    $this->redirectByRole();
+                }
 
-                setFlashMessage('success', 'Welcome back, ' . $user['name']);
-                $this->redirectByRole();
+                setFlashMessage('success', 'QR verification complete. Waiting for admin approval.');
+                redirect('/pending-approval');
             }
         }
 
@@ -185,8 +225,26 @@ class AuthController
         $totpProvisioningUri = $totpQr['provisioning_uri'];
         $totpQrUrl = $totpQr['qr_url'];
         $isFirstTimeSetup = $isSetup;
+        $showQrImage = true;
 
         include APP_PATH . '/views/auth/verify_otp_login.php';
+    }
+
+    public function pendingApproval()
+    {
+        if (!isLoggedIn()) {
+            redirect('/login');
+        }
+
+        $user = $this->userModel->findById((int) getCurrentUserId());
+
+        if ($user && userIsApproved($user)) {
+            establishUserSession($user);
+            setFlashMessage('success', 'Your account has been approved!');
+            $this->redirectByRole();
+        }
+
+        include APP_PATH . '/views/auth/pending_approval.php';
     }
 
     public function resendLoginOtp()
@@ -242,7 +300,7 @@ class AuthController
                 $_SESSION['pending_register_totp_secret'] = TotpService::generateSecret();
                 $_SESSION['pending_register_totp_failed_attempts'] = 0;
 
-                setFlashMessage('success', 'Scan the QR in Google Authenticator, then enter the 6-digit code to finish registration.');
+                setFlashMessage('success', 'Scan the QR in Google Authenticator once, then enter the 6-digit code.');
                 redirect('/verify-register-otp');
             }
         }
@@ -299,6 +357,7 @@ class AuthController
                     'email' => $email,
                     'password_hash' => $hash,
                     'google_auth_secret' => $totpSecret,
+                    'qr_verified' => 1,
                     'role' => 'customer',
                 ]);
 
@@ -309,7 +368,7 @@ class AuthController
                     redirect('/register');
                 }
 
-                setFlashMessage('success', 'Account verified. You can sign in.');
+                setFlashMessage('success', 'Account created. Sign in after an admin approves your account.');
                 redirect('/login?registered=1');
             }
         }

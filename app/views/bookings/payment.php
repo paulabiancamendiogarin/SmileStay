@@ -1,20 +1,22 @@
 
-<?php $pageTitle = 'GCash Payment - ' . APP_NAME; ?>
+<?php $pageTitle = 'Update Payment - ' . APP_NAME; ?>
 <?php include APP_PATH . '/views/layouts/header.php'; ?>
 
 <section class="py-5">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-9">
+                <?php $method = strtolower((string) ($payment['payment_method'] ?? 'cash')); ?>
                 <div class="text-center mb-4">
-                    <span class="badge bg-warning text-dark mb-2"><i class="bi bi-wallet2 me-1"></i>GCash Payment</span>
-                    <h2 class="fw-bold">Pay for your booking</h2>
-                    <p class="text-muted mb-0">Use the payment picture/details below, then upload your proof of payment.</p>
+                    <span class="badge bg-warning text-dark mb-2"><i class="bi bi-wallet2 me-1"></i><?= strtoupper($method) ?> Payment</span>
+                    <h2 class="fw-bold">Update Payment Details</h2>
+                    <p class="text-muted mb-0">Submit receipt/proof or update card payment details for this booking.</p>
                 </div>
+                <?php if ($method === 'cash'): ?>
                 <div class="alert alert-info">
-                    <strong>Note:</strong> QR scanning is disabled. Please pay manually to
-                    <strong><?= htmlspecialchars(GCASH_NUMBER) ?></strong>, exact amount shown below, and include the reference code.
+                    <strong>Cash Payment:</strong> Upload your receipt or proof and provide notes/reference for admin verification.
                 </div>
+                <?php endif; ?>
 
                 <div class="alert alert-danger text-center mb-4 py-3 border-danger border-2" id="countdownWrap">
                     <span class="small text-uppercase text-muted d-block mb-1">Time remaining</span>
@@ -25,27 +27,19 @@
                     <div class="col-md-6">
                         <div class="card shadow-sm h-100 border-primary border-opacity-25">
                             <div class="card-header bg-primary text-white">
-                                <i class="bi bi-image me-2"></i>GCash payment picture
+                                <i class="bi bi-info-circle me-2"></i>Payment info
                             </div>
                             <div class="card-body text-center">
-                                <?php if (!empty($gcashPaymentImageExists)): ?>
-                                    <img src="<?= APP_URL ?>/<?= htmlspecialchars($gcashPaymentImage) ?>" alt="GCash payment picture"
-                                         class="img-fluid rounded border mb-3" style="max-width:280px;">
-                                <?php else: ?>
-                                    <div class="p-4 bg-light rounded mb-3">
-                                        <p class="small text-muted mb-0">
-                                            Payment picture not found at
-                                            <code><?= htmlspecialchars(GCASH_PAYMENT_IMAGE) ?></code>.
-                                            Add your image file there to display it.
-                                        </p>
-                                    </div>
-                                <?php endif; ?>
-
                                 <div class="small text-start bg-light rounded p-3">
-                                    <p class="mb-1"><strong>GCash number:</strong> <?= htmlspecialchars(GCASH_NUMBER) ?></p>
+                                    <p class="mb-1"><strong>Method:</strong> <?= strtoupper($method) ?></p>
                                     <p class="mb-1"><strong>Amount:</strong> ₱<?= number_format((float) $payment['amount'], 2) ?></p>
                                     <p class="mb-0"><strong>Reference:</strong> <code><?= htmlspecialchars($payment['reference_code']) ?></code></p>
                                 </div>
+                                <?php if ($method === 'card'): ?>
+                                    <a href="<?= APP_URL ?>/booking-card/<?= (int) $booking['id'] ?>" class="btn btn-primary mt-3">
+                                        <i class="bi bi-credit-card me-1"></i>Update card payment
+                                    </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -77,9 +71,10 @@
                     </div>
                 </div>
 
+                <?php if ($method === 'cash'): ?>
                 <div class="card mt-4 shadow-sm">
                     <div class="card-header">
-                        <i class="bi bi-cloud-upload me-2"></i>Upload proof of payment
+                        <i class="bi bi-cloud-upload me-2"></i>Upload / Update cash payment proof
                     </div>
                     <div class="card-body">
                         <?php if (!empty($payment['proof_image'])): ?>
@@ -90,14 +85,26 @@
                             <p class="small mb-3"><a href="<?= APP_URL ?>/<?= htmlspecialchars($payment['proof_image']) ?>" target="_blank">View uploaded file</a></p>
                         <?php endif; ?>
 
-                        <?php if ($payment['status'] === 'pending'): ?>
+                        <?php if (($payment['status'] ?? 'pending') !== 'verified'): ?>
                             <form action="<?= APP_URL ?>/booking-payment-upload/<?= (int) $booking['id'] ?>" method="POST"
                                   enctype="multipart/form-data" class="row g-3 align-items-end">
-                                <div class="col-md-8">
+                                <div class="col-md-4">
                                     <label class="form-label">Screenshot / receipt image</label>
                                     <input type="file" name="proof" class="form-control" accept="image/jpeg,image/png,image/gif,image/webp" required>
                                 </div>
-                                <div class="col-md-4">
+                                <?php
+                                    $refValue = $payment['payment_reference'] ?? $payment['reference_code'] ?? '';
+                                ?>
+                                <div class="col-md-3">
+                                    <label class="form-label">Payment reference</label>
+                                    <input type="text" name="payment_reference" class="form-control" placeholder="Ref no."
+                                           value="<?= htmlspecialchars($refValue) ?>">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Notes</label>
+                                    <input type="text" name="payment_notes" class="form-control" placeholder="Optional notes">
+                                </div>
+                                <div class="col-md-2">
                                     <button type="submit" class="btn btn-success w-100">
                                         <i class="bi bi-upload me-1"></i>Submit proof
                                     </button>
@@ -118,11 +125,13 @@
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </section>
 
+<?php if ($method === 'cash'): ?>
 <script>
 (function () {
     var deadline = <?= isset($paymentExpiresUnix) ? (int)$paymentExpiresUnix : 0 ?>;
@@ -151,5 +160,6 @@
     tick();
 })();
 </script>
+<?php endif; ?>
 
 <?php include APP_PATH . '/views/layouts/footer.php'; ?>

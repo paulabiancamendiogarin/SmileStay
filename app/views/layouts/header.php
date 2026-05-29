@@ -128,6 +128,11 @@ $currentUrl = $_SERVER['REQUEST_URI'];
                                         <i class="bi bi-calendar-check me-2"></i>My Bookings
                                     </a>
                                 </li>
+                                <li>
+                                    <a class="dropdown-item" href="<?= APP_URL ?>/my-payments">
+                                        <i class="bi bi-wallet2 me-2"></i>My Payments
+                                    </a>
+                                </li>
 
                                 <li>
                                     <a class="dropdown-item" href="<?= APP_URL ?>/profile">
@@ -180,6 +185,5 @@ $currentUrl = $_SERVER['REQUEST_URI'];
         </div>
     </div>
 <?php endif; ?>
-
 
 <main class="min-vh-100">

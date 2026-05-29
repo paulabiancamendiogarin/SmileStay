@@ -27,6 +27,7 @@ define('APP_PATH', BASE_PATH . '/app');
 define('CONFIG_PATH', BASE_PATH . '/config');
 define('PUBLIC_PATH', BASE_PATH . '/public');
 define('UPLOAD_PATH', PUBLIC_PATH . '/uploads/hotels/');
+define('PAYMENT_PROOF_PATH', PUBLIC_PATH . '/uploads/payments/');
 
 define('GOOGLE_MAPS_API_KEY', 'YOUR_GOOGLE_MAPS_API_KEY_HERE');
 
@@ -107,4 +108,82 @@ unset($_SESSION['flash']);
 return $flash;
 }
 return null;
+}
+
+function userIsApproved(?array $user = null): bool
+{
+    if ($user !== null) {
+        return ($user['role'] ?? '') === 'admin' || !empty($user['is_approved']);
+    }
+
+    if (isAdmin()) {
+        return true;
+    }
+
+    return !empty($_SESSION['user_is_approved']);
+}
+
+function userQrVerified(?array $user = null): bool
+{
+    if ($user !== null) {
+        return ($user['role'] ?? '') === 'admin' || !empty($user['qr_verified']);
+    }
+
+    return !empty($_SESSION['user_qr_verified']);
+}
+
+function establishUserSession(array $user): void
+{
+    $_SESSION['user_id'] = $user['id'];
+    $_SESSION['user_name'] = $user['name'];
+    $_SESSION['user_email'] = $user['email'];
+    $_SESSION['user_role'] = $user['role'];
+    $_SESSION['user_is_approved'] = userIsApproved($user) ? 1 : 0;
+    $_SESSION['user_qr_verified'] = userQrVerified($user) ? 1 : 0;
+}
+
+function requireLogin(): void
+{
+    if (!isLoggedIn()) {
+        setFlashMessage('error', 'Please sign in to continue.');
+        redirect('/login');
+    }
+}
+
+function requireApprovedAccess(): void
+{
+    requireLogin();
+
+    if (isAdmin()) {
+        return;
+    }
+
+    if (!userIsApproved()) {
+        redirect('/pending-approval');
+    }
+}
+
+function approvalBadgeClass(bool $approved): string
+{
+    return $approved ? 'success' : 'warning';
+}
+
+function paymentStatusBadge(string $status): array
+{
+    return match ($status) {
+        'paid', 'verified' => ['class' => 'success', 'label' => 'Paid'],
+        'pending' => ['class' => 'warning', 'label' => 'Pending'],
+        default => ['class' => 'secondary', 'label' => 'Unpaid'],
+    };
+}
+
+function bookingStatusBadge(string $status): array
+{
+    return match ($status) {
+        'confirmed' => ['class' => 'success', 'label' => 'Confirmed'],
+        'pending' => ['class' => 'warning', 'label' => 'Pending'],
+        'cancelled' => ['class' => 'danger', 'label' => 'Cancelled'],
+        'completed' => ['class' => 'info', 'label' => 'Completed'],
+        default => ['class' => 'secondary', 'label' => ucfirst($status)],
+    };
 }

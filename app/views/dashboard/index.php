@@ -175,6 +175,9 @@ setTimeout(function () {
                             <a href="<?= APP_URL ?>/my-bookings" class="btn btn-outline-secondary">
                                 <i class="bi bi-calendar-check me-2"></i>My Bookings
                             </a>
+                            <a href="<?= APP_URL ?>/my-payments" class="btn btn-outline-success">
+                                <i class="bi bi-wallet2 me-2"></i>My Payments
+                            </a>
                         </div>
                     </div>
                 </div>

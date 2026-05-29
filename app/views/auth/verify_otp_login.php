@@ -21,6 +21,7 @@
                             </div>
                         <?php endif; ?>
 
+                        <?php if (!empty($showQrImage)): ?>
                         <div class="text-center mb-3">
                             <img src="<?= htmlspecialchars($totpQrUrl ?? '') ?>" alt="Google Authenticator QR" class="img-fluid border rounded p-2 bg-white" style="max-width: 240px;">
                         </div>
@@ -28,7 +29,9 @@
                             <div><strong>Account:</strong> <?= htmlspecialchars($pendingEmail ?? '') ?></div>
                             <div><strong>Issuer:</strong> <?= htmlspecialchars($totpIssuer ?? APP_NAME) ?></div>
                             <div><strong>Manual key:</strong> <code><?= htmlspecialchars($totpSecretForView ?? '') ?></code></div>
+                            <div class="mt-2 text-muted">Scan this QR only once. You will not need to scan it again after admin approval.</div>
                         </div>
+                        <?php endif; ?>
 
                         <form method="POST" action="<?= APP_URL ?>/verify-login-otp" class="mb-3">
                             <div class="mb-3">

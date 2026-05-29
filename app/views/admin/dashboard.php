@@ -14,6 +14,13 @@
             </div>
         </div>
 
+        <?php if (!empty($pendingUserCount)): ?>
+        <div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+            <span><i class="bi bi-person-exclamation me-2"></i><strong><?= (int) $pendingUserCount ?></strong> user(s) awaiting approval.</span>
+            <a href="<?= APP_URL ?>/admin-users" class="btn btn-sm btn-warning">Review users</a>
+        </div>
+        <?php endif; ?>
+
         <!-- STATS -->
         <div class="row g-4 mb-5">
 
