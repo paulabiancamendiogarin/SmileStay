@@ -1,7 +1,7 @@
 <?php
 
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'hotel_locatorr_db');
+define('DB_NAME', 'SmileStay');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 

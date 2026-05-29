@@ -1,7 +1,7 @@
--- Client payment updates + admin review (run once on hotel_locatorr_db)
+-- Client payment updates + admin review (run once on SmileStay)
 -- Safe to run multiple times only if you handle duplicate column errors manually.
 
-USE hotel_locatorr_db;
+USE SmileStay;
 
 -- Extend payment status for admin rejection
 ALTER TABLE payments

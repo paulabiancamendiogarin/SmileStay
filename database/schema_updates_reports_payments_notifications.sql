@@ -1,7 +1,7 @@
 -- Analytics/reporting support + payment methods + API tokens + notifications
 -- Run after hotel_system.sql + schema_updates_gcash_otp.sql + schema_updates_user_approval.sql
 
-USE hotel_locatorr_db;
+USE SmileStay;
 
 -- Users: simple API token fields (optional)
 ALTER TABLE users

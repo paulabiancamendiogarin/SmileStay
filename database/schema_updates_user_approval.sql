@@ -1,7 +1,7 @@
 -- User approval, one-time QR verification, and booking payment fields
 -- Run after hotel_system.sql and schema_updates_gcash_otp.sql
 
-USE hotel_locatorr_db;
+USE SmileStay;
 
 ALTER TABLE users
     ADD COLUMN qr_verified TINYINT(1) NOT NULL DEFAULT 0 AFTER google_auth_secret,

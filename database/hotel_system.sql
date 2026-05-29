@@ -1,9 +1,9 @@
 -- =====================================================
--- Hotel Locator System Database
+-- SmileStay Database
 -- For Bacolod City, Philippines
 -- =====================================================
-CREATE DATABASE IF NOT EXISTS hotel_locatorr_db;
-USE hotel_locatorr_db;
+CREATE DATABASE IF NOT EXISTS SmileStay;
+USE SmileStay;
 -- =====================================================
 -- USERS TABLE
 -- =====================================================
